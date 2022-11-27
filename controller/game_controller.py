@@ -4,25 +4,43 @@ from model.game_model import GameModel
 from model.ball import Ball
 from model.paddle import Paddle
 from model.player import Player
+from model.paddle_listener import setup_paddle_event_handlers
 from view.game_view import GameView
 
+from event.event import post_event, EventType
+
+# *************************************************** #
+# ****************** View Settings ****************** #
+# *************************************************** #
+
+# ***************** Window Settings ***************** #
 
 WINDOW_NAME = "Pong"  # name of the window
 WINDOW_WIDTH, WINDOW_HEIGHT = 700, 500  # size of the window
 FPS = 60  # frames per second
 
-Color = tuple[int, int, int]  # represents an RGB color (3 numbers between 0 and 255)
-BACKGROUND_COLOR: Color = (0, 100, 0)
-MID_LINE_COLOR: Color = (100, 255, 255)
-BALL_COLOR: Color = (200, 150, 0)
-LEFT_PADDLE_COLOR: Color = (0, 100, 150)
-RIGHT_PADDLE_COLOR: Color = (100, 150, 0)
+# ****************** Color Settings ***************** #
 
-WIN_SCORE = 5  # Score for winning the game
+Color = tuple[int, int, int]  # represents an RGB color (3 numbers between 0 and 255)
+BACKGROUND_COLOR: Color = (91, 136, 199)
+MID_LINE_COLOR: Color = (100, 255, 255)
+BALL_COLOR: Color = (35, 186, 58)
+LEFT_PADDLE_COLOR: Color = (219, 131, 31)
+RIGHT_PADDLE_COLOR: Color = (179, 23, 160)
+
+# ****************** Text Settings ****************** #
+
 SCORE_FONT = ("comicsans", 50)
 MESSAGE_FONT = ("comicsans", 50)
-SCORE_COLOR: Color = (255, 255, 255)
-MESSAGE_COLOR: Color = (255, 255, 255)
+SCORE_COLOR: Color = (190, 250, 244)
+MESSAGE_COLOR: Color = (119, 245, 56)
+
+# **************************************************** #
+# ****************** Model Settings ****************** #
+# **************************************************** #
+
+WIN_SCORE = 5  # Score for winning the game
+PADDLE_DELTA_Y = 5 # Paddle Y speed
 
 
 class GameController:
@@ -34,6 +52,20 @@ class GameController:
         """Process the model and returns the Player that scored a point.
         None if there wasn't a score in this iteration"""
         return self.model.process()
+
+    def process_user_input(self):
+        """Process the user inputs by posting the corresponding event"""
+        keys = pygame.key.get_pressed()
+        paddle_left = self.model.player_left.paddle
+        paddle_right = self.model.player_right.paddle
+        if keys[pygame.K_w] and self.model.in_bounds(paddle_left, -PADDLE_DELTA_Y):
+            post_event(EventType.paddle_up, paddle_left)
+        if keys[pygame.K_s] and self.model.in_bounds(paddle_left, PADDLE_DELTA_Y):
+            post_event(EventType.paddle_down, paddle_left)
+        if keys[pygame.K_UP] and self.model.in_bounds(paddle_right, -PADDLE_DELTA_Y):
+            post_event(EventType.paddle_up, paddle_right)
+        if keys[pygame.K_DOWN] and self.model.in_bounds(paddle_right, PADDLE_DELTA_Y):
+            post_event(EventType.paddle_down, paddle_right)
 
     def render_view(self) -> None:
         """Renders the view."""
@@ -57,10 +89,12 @@ class GameController:
     def mainloop(self) -> None:
         """Game's main loop"""
         run = True
+        setup_paddle_event_handlers()
         self.view.setup(WINDOW_NAME, WINDOW_WIDTH, WINDOW_HEIGHT)
         while run:
             self.view.tick(FPS)
             player = self.process_model()
+            self.process_user_input()
             self.render_view()
 
             # Handle score
@@ -73,7 +107,7 @@ class GameController:
 
             if self.view.check_if_quit():
                 run = False
-                
+
         self.view.quit()
 
 

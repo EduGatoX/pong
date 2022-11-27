@@ -21,7 +21,6 @@ class Paddle:
     y: int
     width: int
     height: int
-    vy: int
     paddle_type: PaddleType
 
     @property
@@ -32,5 +31,6 @@ class Paddle:
 
         return PaddleEdge(self.x)
 
-    def move(self) -> None:
-        self.y += self.vy
+    def move(self, dy: int) -> None:
+        """Move the paddle on the 'y' axis by 'dy' units"""
+        self.y += dy

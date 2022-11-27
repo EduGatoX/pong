@@ -5,8 +5,8 @@ from .paddle import Paddle, PaddleType
 # CONSTANTS
 # Ball parameters
 BALL_RADIUS = 10
-BALL_VX0, BALL_VY0 = -6, 0  # ball initial velocity
-BALL_VX_MAX, BALL_VY_MAX = 2, 2  # ball maximum velocity
+BALL_VX0, BALL_VY0 = 5, 0  # ball initial velocity
+BALL_VX_MAX, BALL_VY_MAX = 5, 5  # ball maximum velocity
 BALL_VEL_MULTIPLIER = 1.1  # ball increase velocity multiplier
 
 # Paddle parameters
@@ -14,14 +14,14 @@ PADDLE_WIDTH, PADDLE_HEIGHT = 20, 100  # paddle size
 PADDLE_VY = 0  # paddle movement velocity
 
 # Collision parameters
-TOLERANCE = 0.5
+TOLERANCE = 1
 
 
 class GameModel:
     def __init__(self, width: int, height: int) -> None:
         """
         Class responsible for managing the behavior of the model.
-        
+
         Attributes:
             width (int) : width of the pong field
             height (int) : height of the pong field
@@ -51,7 +51,6 @@ class GameModel:
                 y=(height - PADDLE_HEIGHT) // 2,
                 width=PADDLE_WIDTH,
                 height=PADDLE_HEIGHT,
-                vy=PADDLE_VY,
                 paddle_type=PaddleType.LEFT_PADDLE,
             ),
         )
@@ -65,7 +64,6 @@ class GameModel:
                 y=(height - PADDLE_HEIGHT) // 2,
                 width=PADDLE_WIDTH,
                 height=PADDLE_HEIGHT,
-                vy=PADDLE_VY,
                 paddle_type=PaddleType.RIGHT_PADDLE,
             ),
         )
@@ -80,9 +78,8 @@ class GameModel:
 
     def process(self) -> Player | None:
         self.process_ball()
-        self.process_paddle()
         player = self.process_score()
-        if player: # if there is a score
+        if player:  # if there is a score
             self.reset()
         return player
 
@@ -110,13 +107,14 @@ class GameModel:
             player = self.player_right
         return player
 
-    def process_paddle(self) -> None:
-        self.player_left.paddle.move()
+    def in_bounds(self, paddle: Paddle, dy: int):
+        """Checks if the paddle is inside the field along the 'y' axis
+        after a displacement of 'dy' units"""
+        return 0 < paddle.y + dy <= (self.height - paddle.height)
 
-
-# ************************* #
-# **** Score Functions **** #
-# ************************* #
+# ********************************************************* #
+# ******************** Score Functions ******************** #
+# ********************************************************* #
 
 
 def has_scored(ball: Ball, edge: int) -> bool:
@@ -128,9 +126,10 @@ def has_scored(ball: Ball, edge: int) -> bool:
     return False
 
 
-# ************************* #
-# ** Collision Functions ** #
-# ************************* #
+# ********************************************************* #
+# ****************** Collision Functions ****************** #
+# ********************************************************* #
+
 
 def handle_paddle_collision(ball: Ball, paddle: Paddle):
     """Handles the collision between the ball and the paddle.
